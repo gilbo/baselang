@@ -28,4 +28,6 @@ See the [examples](examples) directory for example uses of Typelang.  This is a 
 ## Tests
 
 You can run the testing suite by executing
-```./runtests```
+```
+./runtests
+```

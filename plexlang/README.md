@@ -28,4 +28,6 @@ See the [examples](examples) directory for example uses of Plexlang.  This is a 
 ## Tests
 
 You can run the testing suite by executing
-```./runtests```
+```
+./runtests
+```
