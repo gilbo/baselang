@@ -1,5 +1,3 @@
-% C Examples
-
 Thanks to being built on the Terra/Lua infrastructure, Plexlang comes equipped with some easy ways to be used in new or existing C/C++ programs.  The examples in this directory demonstrate the two primary strategies for running DSL code from a host C program.
 
 
