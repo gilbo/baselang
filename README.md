@@ -54,7 +54,9 @@ When you get started working with any of these languages, I recommend you go dow
 ## Testing
 
 To run the tests for a langauge, you simply need to run the script
-```./runtests```
+```
+./runtests
+```
 This is a good way to check for anything you missed during refactoring.
 
 The compilers come with a number of tests already written.  However, I  recommend that you actively add new tests with each new feature or major change, and actively maintain the existing tests.
