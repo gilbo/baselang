@@ -1,0 +1,108 @@
+#!/usr/bin/env terra
+local ffi = require 'ffi'
+
+if ffi.os == 'Windows' then
+  print('TODO windows')
+end
+local lscmd = "find tests"
+
+local color = {
+  DEFAULT = '\27[39m',
+  OKBLUE  = '\27[34m', -- Blue
+  OKGREEN = '\27[32m', -- Green
+  WARNING = '\27[33m', -- Yellow
+  FAIL    = '\27[31m', -- Red
+}
+
+local passed      = {}
+local badpassed   = {}
+local failed      = {}
+local disabled    = {}
+
+local exclude = {
+  ['tests/test.lua'] = true,
+}
+
+local disable_str = '--DISABLE-TEST'
+local function prefixmatch(str, prefix)
+  return string.sub(str,1,#prefix) == prefix
+end
+local function is_disabled(filename)
+  local handle = io.open(filename, "r")
+  local line1 = handle:read()
+  handle:close()
+
+  local is_disabled = false
+  if prefixmatch(line1,disable_str) then is_disabled = true end
+  return is_disabled
+end
+
+
+
+print([[
+==============================================================================
+=                              Running tests...                              =
+============================================================================]]
+..'==')
+
+for line in io.popen(lscmd):lines() do
+  if ffi.os == "Windows" then error('TODO windows') end
+  local filename = line:match("^(tests/.*%.t)$")
+  if filename then
+    if is_disabled(filename) then
+      table.insert(disabled, filename)
+    else
+      --print('running '..filename)
+      local execstring = "./bin/tensl "
+      execstring = execstring..filename
+
+      print(execstring)
+      local success = os.execute(execstring)
+
+      if success ~= 0 then
+        table.insert(failed, filename)
+        print(filename .. " "..color.FAIL.."FAILED"..color.DEFAULT)
+      else
+        table.insert(passed, filename)
+        print(filename .. " "..color.OKGREEN.."PASSED"..color.DEFAULT)
+      end
+    end
+  end
+end
+print()
+
+-- test whether the coverageanalysis exists
+local coverage_on = os.execute('test -f coverageinfo.lua') == 0
+if coverage_on then
+  print('-- Assembling Coverage Analysis Report --')
+  os.execute('./covanalysis')
+  os.execute('rm coverageinfo.lua')
+end
+
+
+print([[
+-----------------------------  Disabled tests  -----------------------------]]
+..'--')
+for i,e in ipairs(disabled) do print(e) end
+print()
+
+print([[
+------------------------------  Passed tests  ------------------------------]]
+..'--')
+for i,e in ipairs(passed) do print(e) end
+print()
+
+print([[
+------------------------------  Failed tests  ------------------------------]]
+..'--')
+for i,e in ipairs(failed) do print(e) end
+print()
+
+print('tests disabled:  '..tostring(#disabled))
+print('tests passed:    '..tostring(#passed))
+if #failed + #badpassed > 0 then
+  print(color.FAIL..'tests failed:    '..tostring(#failed + #badpassed)..
+        color.DEFAULT)
+else
+  print(color.OKGREEN..'All tests passed!'..color.DEFAULT)
+end

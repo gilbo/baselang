@@ -1,0 +1,347 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title>Plexlang Manual - Plexlang Manual</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+<body>
+<div id='body-wrapper'>
+<div id="header">
+<h1 class="title">Plexlang Manual</h1>
+</div>
+<div id="TOC">
+<ul>
+<li><a href="#plexlang-is...">Plexlang is...</a></li>
+<li><a href="#getting-started-running-code">Getting Started (Running Code)</a><ul>
+<li><a href="#hello-42">Hello, 42!</a></li>
+<li><a href="#simple-ways-to-get-plexlang-working">Simple Ways to Get Plexlang Working</a><ul>
+<li><a href="#plexlang-launcher-script-fast-start">Plexlang Launcher Script (Fast Start)</a></li>
+<li><a href="#adding-plexlang-to-terra_path">Adding Plexlang to <code>TERRA_PATH</code></a></li>
+<li><a href="#custom-launcher-script">Custom Launcher Script</a></li>
+</ul></li>
+<li><a href="#using-plexlang-terra-from-c-code">Using Plexlang / Terra from <code>C</code> code</a></li>
+</ul></li>
+<li><a href="#getting-started-writing-code">Getting Started (Writing Code)</a><ul>
+<li><a href="#plexlib">Plexlib</a></li>
+<li><a href="#functions">Functions</a></li>
+<li><a href="#types-literals-constants-values">Types, Literals, Constants, Values</a><ul>
+<li><a href="#types">Types</a></li>
+<li><a href="#literals-and-constants">Literals and Constants</a></li>
+<li><a href="#casting-and-coercion">Casting and Coercion</a></li>
+</ul></li>
+<li><a href="#variables-and-assignment">Variables and Assignment</a></li>
+<li><a href="#control-flow">Control Flow</a></li>
+<li><a href="#primitive-expressions">Primitive Expressions</a><ul>
+<li><a href="#built-in-functions">Built-in functions</a></li>
+<li><a href="#external-functions">External Functions</a></li>
+</ul></li>
+<li><a href="#tensor-expressions">Tensor Expressions</a><ul>
+<li><a href="#tensor-indexing-expressions">Tensor-Indexing Expressions</a></li>
+<li><a href="#tensor-construction-expressions">Tensor-Construction Expressions</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#plexlang-lua-api">Plexlang Lua API</a><ul>
+<li><a href="#constant-introspection">Constant Introspection</a></li>
+<li><a href="#function-introspection">Function Introspection</a></li>
+<li><a href="#type-introspection">Type Introspection</a></li>
+<li><a href="#static-function-compilation">Static Function Compilation</a></li>
+</ul></li>
+</ul>
+</div>
+<h1 id="plexlang-is...">Plexlang is...</h1>
+<p>Plexlang is a demonstration language using the Lua/Terra compiler infrastructure. It lacks certain common features like if-then-else, loops, and recursive functions, making it appropriately narrow for the specification of straight-line code / circuits. However, the language does include 2 interesting features:</p>
+<ul>
+<li><p>a modestly rich primitive type system, including both single and double precision floating point numbers, as well as signed 32-bit integers and unsigned 64-bit integers. The type system also produces implicit coercions between these types when maintenance of precision can be guaranteed.</p></li>
+<li><p>a tensor-type constructor with fixed dimensions, suitable for encoding small vectors and matrices. These tensor types are integrated with the various primitive types and various primitive binary operators, as well as having a special tensor map/fold syntax derived from mathematical expressions.</p></li>
+</ul>
+<h1 id="getting-started-running-code">Getting Started (Running Code)</h1>
+<p>We assume a passing familiarity with the <a href="http://terralang.org/">Lua/Terra ecosystem</a> in this document.</p>
+<h2 id="hello-42">Hello, 42!</h2>
+<p>Since Plexlang doesn't support string values, let's do some arithmetic instead</p>
+<pre><code>import &#39;plexlang.plexlang&#39;
+
+local plexl getanswer()
+  return 21 + 21
+end
+
+print(getanswer())</code></pre>
+<p>Save this in a file <code>hello42.t</code>. Then, execute the command <code>terra hello42.t</code> to run the program through Terra to print out <code>42</code>. Doing so will explode in your face. Ow. (see below)</p>
+<h2 id="simple-ways-to-get-plexlang-working">Simple Ways to Get Plexlang Working</h2>
+<p>The problem we just ran into is that Terra needs to know where the plexlang <a href="../release"><code>release/</code></a> directory is before it &quot;imports&quot; the language. Here are three simple ways to do that. (note that we can't solve this problem inside of the <code>hello42.t</code> script because <code>import</code> statements are early evaluated before any of the rest of the script starts executing.</p>
+<h3 id="plexlang-launcher-script-fast-start">Plexlang Launcher Script (Fast Start)</h3>
+<p>The simplest solution is to just use the provided executable launcher script. You can find it at <a href="../bin/plexl"><code>bin/plexl</code></a>. To run <code>hello42.t</code>, we just type</p>
+<p><code>./bin/plexl hello42.t</code></p>
+<p>or any other valid path to the plexl script from wherever you happen to be. For instance, you can add the <a href="../bin"><code>bin/</code></a> directory to your command line path to make <code>plexl</code> easily accessible wherever you find yourself in your system.</p>
+<h3 id="adding-plexlang-to-terra_path">Adding Plexlang to <code>TERRA_PATH</code></h3>
+<p>If you work with a lot of Terra DSLs, you might find it simpler to just add plexlang's location to an environment variable. You can do this by extending <code>TERRA_PATH</code> with <code>release/?.t</code>. See the Terra documentation for more details.</p>
+<h3 id="custom-launcher-script">Custom Launcher Script</h3>
+<p>If you eventually feel like you want more control of the startup process so that you can better integrate plexlang into your tool or together with other Terra DSLs, you can always just use your own launch script and modify the <code>package.terrapath</code> variable directly there. If you're going down this route, take a look at <a href="../bin/plexl"><code>bin/plexl</code></a> for a skeleton example.</p>
+<h2 id="using-plexlang-terra-from-c-code">Using Plexlang / Terra from <code>C</code> code</h2>
+<p>For a more detailed description of ways of using Plexlang from host C code, see <a href="../example_c/README.md"><code>example_c/README.md</code></a> and example code.</p>
+<p>There are two ways to use Plexlang from C code. The first way is to embed a Lua/Terra interpreter in the C program. If you go this route, then everything except for setting up the <code>package.terrapath</code> variable with the <a href="../release"><code>release/</code></a> directory is detailed in the Terra and Lua docs.</p>
+<p>The second way is to use Plexlang scripts as code generators during your build process. The key to this process is the <code>PL.compiletofile(...)</code> function, which is described <a href="#static-function-compilation">later on</a>.</p>
+<h1 id="getting-started-writing-code">Getting Started (Writing Code)</h1>
+<h2 id="plexlib">Plexlib</h2>
+<p>In the following we assume that the Plexlang standard library has been included already using the line</p>
+<pre><code>local PL = require &#39;plexlang.plexlib&#39;</code></pre>
+<h2 id="functions">Functions</h2>
+<p>Plexlang allows programmers to write simple straight-line code functions. We can define one of these functions either anonymously, inline, or in a statement</p>
+<pre><code>-- define a function as a global symbol in Lua
+plexl foo()
+  return 42
+end
+
+-- define a function as a local symbol
+local plexl bar()
+  return 42 + 1
+end
+
+-- define a function anonymously and assign to a variable
+local baz = plexl()
+  return 42 + 2
+end</code></pre>
+<p>Functions can be given arguments, but those arguments must be typed</p>
+<pre><code>local plexl scale_and_add_one( s : PL.double, x : PL.double )
+  return s*x + 1.0
+end</code></pre>
+<p>(notice that we need to look up Plexlang types in the Plexlang standard library)</p>
+<p>Plexlang functions can also return multiple values.</p>
+<pre><code>local plexl some_pi()
+  return 3, 1, 4, 1
+end
+
+local a, b, c, d = some_pi()
+print(a,b,c,d) -- will print    3   1   4   1</code></pre>
+<p>While Plexlang lacks fully-recursive functions, you can call functions from other functions.</p>
+<pre><code>local plexl square( x : PL.double )
+  return x * x
+end
+local plexl quad( x : PL.double )
+  return square(square(x))
+end
+assert(quad(2) == 16)</code></pre>
+<h2 id="types-literals-constants-values">Types, Literals, Constants, Values</h2>
+<h3 id="types">Types</h3>
+<p>Plexlang has the following primitive types</p>
+<pre><code>PL.int32 PL.uint64 PL.bool PL.float PL.double</code></pre>
+<p>In addition to primitive types, Plexlang values can also be tensor-typed. (For the unfamiliar, tensors are simply a generalization of vectors and matrices) Many common tensor types are given explicitly aliases. For instance,</p>
+<pre><code>PL.vec3d    -- a vector of 3 doubles
+PL.mat2f    -- a 2x2 matrix of floats
+PL.mat2x3i  -- a 2x3 matrix of int32s</code></pre>
+<p>We can also construct vector and matrix types using the more general forms.</p>
+<pre><code>PL.vector(primitive_type, n)
+PL.matrix(primitive_type, n, m)</code></pre>
+<p>These are just special cases of the more general tensor constructor.</p>
+<pre><code>PL.tensor(primitive_type, ...)</code></pre>
+<p>Notice that all tensor types must have a constant fixed dimension. Tensors are intended to encode small, constant sized data that show up regularly when dealing with geometry, simulation and graphical data. (e.g. points, colors, linear/affine transformations, stress matrices, etc.) Trying to use these types to store large vectors of data will result in very bad performance in almost all cases.</p>
+<h3 id="literals-and-constants">Literals and Constants</h3>
+<p>Numeric literals can be written into Plexlang code as you would expect; with the expected types. For instance, here are 4 variants of 0:</p>
+<pre><code>0    -- inferred as PL.int32
+0.0  -- inferred as PL.double
+0f
+0.0f -- both inferred as PL.float
+0UL
+0ULL -- both inferred as PL.uint64</code></pre>
+<p>However, notice that <code>0L</code> or <code>0U</code> will produce errors because the <code>int64</code> and <code>uint32</code> types are not supported in Plexlang.</p>
+<p>You can also write tensor literals into code</p>
+<pre><code>{1,2,3} -- a PL.vec3i
+{{1.0,0,0},{0,1,0},{0,0,1}} -- a PL.mat3d</code></pre>
+<p>Aside from literals, constant values can also be computed in Lua and then captured by a Plexlang function definition. Plexlang will attempt to infer a reasonable type, but since Lua numbers are a very general type, this may be unsatisfactory. To help with this issue and improve code documentation, we provide Lua-level constants.</p>
+<pre><code>local biganswer = PL.Constant(PL.uint64, 42)
+local idmat3f   = PL.Constant(PL.float, {{1,0,0},{0,1,0},{0,0,1}})
+
+local plexl foo()
+  return idmat3f[0,0], biganswer
+end</code></pre>
+<h3 id="casting-and-coercion">Casting and Coercion</h3>
+<p>Plexlang supports explicit typecasting as well as coercion. The semantics of these are very similar to C and Terra.</p>
+<p>In order to perform an explicit typecast, you just use a type as if it were a function.</p>
+<pre><code>local plexl frac( x : PL.double )
+  return x - PL.double( PL.int32(x) )
+end
+
+local plexl fracmat( x : PL.mat3d )
+  return x - PL.mat3d( PL.mat3i(x) )
+end</code></pre>
+<p>In addition to these explicit casts, Plexlang will insert implicit casts, also called coercions (approximately) whenever doing so would not incur any loss of precision, but would avoid an otherwise annoying type-error. Specifically, the coercion rules are that</p>
+<ul>
+<li><code>PL.float</code> may be coerced to <code>PL.double</code></li>
+<li><code>PL.int32</code> may be coerced to <code>PL.double</code></li>
+<li><code>PL.int32</code> may be coerced to <code>PL.uint64</code> (This is the only one that's not strictly safe)</li>
+<li>If <code>X</code> may be coerced to <code>Y</code>, then <code>PL.tensor(X,...)</code> may be coerced to <code>PL.tensor(Y,...)</code> provided that the dimensions of the two tensors match.</li>
+</ul>
+<h2 id="variables-and-assignment">Variables and Assignment</h2>
+<p>Aside from function arguments, Plexlang allows for the declaration of variables. A variable must either be explicitly typed or assigned an initial value (from which the type can be inferred).</p>
+<pre><code>local plexl foo()
+  var x : PL.double
+  var y = 0.0
+  var z : PL.double = 1.0
+  return y + z
+end</code></pre>
+<p>Assignments to variables are also allowed, including to multiple variables at once. This can be used to capture multiple return values from a function call.</p>
+<pre><code>local plexl square_triple(x : PL.double)
+  var square : PL.double
+  var triple : PL.double
+  var a = x * x
+  square, triple = a, a*x
+  return square, triple
+end
+
+local plexl foo()
+  var x : PL.double
+  var y : PL.double
+  x,y = square_triple(3)
+end</code></pre>
+<p>However, the current version of Plexlang does not support the declaration and assignment of multiple variables at the same time.</p>
+<h2 id="control-flow">Control Flow</h2>
+<p>The scope of variables can be limited with do blocks, though other kinds of control flow are omitted from the language.</p>
+<pre><code>local plexl shadow()
+  var x = 3
+  do
+    var x = 5
+  end
+  return x
+end
+
+assert(shadow() == 3)</code></pre>
+<h2 id="primitive-expressions">Primitive Expressions</h2>
+<p>Plexlang supports the following kinds of operations between primitive expressions.</p>
+<pre><code>local plexl arithmetic_plus()
+  var x  = 12.0
+  var y  = 32.0
+  var bt = true
+  var bf = false
+
+  var negx    = -x
+  var notb    = not bt
+
+  var bor     = bt or bf
+  var band    = bt and bf
+
+  var lt      = x &lt; y
+  var gt      = x &gt; y
+  var lte     = x &lt;= y
+  var gte     = x &gt;= y
+  var eq      = x == y
+  var neq     = x ~= y    -- notice Lua style not-equal syntax
+
+  var sum     = x + y
+  var diff    = x - y
+  var prod    = x * y
+  var quot    = x / y
+
+  var parens  = x * (x + y)
+end</code></pre>
+<h3 id="built-in-functions">Built-in functions</h3>
+<p>There is a built-in assertion function <code>PL.assert()</code> that's useful for writing testing code. If the argument evaluates to false, then the entire program will terminate.</p>
+<pre><code>local plexl runtest()
+  var answer = 42
+  PL.assert(answer / 2 == 21)
+end</code></pre>
+<h3 id="external-functions">External Functions</h3>
+<p>You can extend Plexlang with custom external functions, provided they follow a Terra calling convention (e.g. C functions). To do this, the <code>PL.extern()</code> library function is provided.</p>
+<p>For example, suppose you want to use a sqrt function. You could import the C math library using Terra and then bind the function in using <code>PL.extern()</code></p>
+<pre><code>local cmath = terralib.includecstring [[#include &quot;math.h&quot;]]
+local sqrt = PL.extern(&#39;sqrt&#39;, PL.arrow(PL.double, PL.double), cmath.sqrt)</code></pre>
+<p>The first argument to <code>PL.extern</code> is the function name for debugging purposes. The second argument is the function's type, and the third argument is the implementation of the function.</p>
+<p>WARNING: In general, Plexlang assumes that functions imported in this way are &quot;referentially transparent&quot; in the sense that they should be indistinguishable from a deterministic state-free function <em>from the perspective of Plexlang</em>. This allows that the implementation of an external function could still use side-effects or randomness to produce the same result more efficiently, or to record profiling information, etc.</p>
+<h2 id="tensor-expressions">Tensor Expressions</h2>
+<h3 id="tensor-indexing-expressions">Tensor-Indexing Expressions</h3>
+<p>Plexlang's most sophisticated feature is its tensor system. Most notably, this includes its special <em>tensor-indexing</em> expressions. To understand these more intuitively, consider the following expression for the matrix-vector dot product.</p>
+<pre><code>local plexl matvecprod( m : PL.mat3d, x : PL.vec3d )
+  return :[i] +[j] m[i,j] * x[j]
+end</code></pre>
+<p>In more words, this expression says &quot;map over the index <code>i</code>, and within that sum over the index <code>j</code>, and within that take the product of the <code>i,j</code>-th entry of <code>m</code> with the <code>j</code>-th entry of <code>x</code>&quot;.</p>
+<p>To make this even more intuitive, consider this expression for the dot product: <code>+[i] x[i] * y[i]</code> Imagine we replaced the <code>+[i]</code> with a big summation like a mathematician would write. Then, we would have exactly the mathematical definition of the dot product.</p>
+<p>To make the <code>:[i]</code> example clearer, consider the case of scaling a vector by <code>3</code>: <code>:[i] 3 * x[i]</code>.</p>
+<p>As is apparent from the matrix-vector multiplication example, these two <em>tensor-indexing</em> expressions can be combined to express more complicated forms. In the following code-snippet, you can see how a wide variety of matrix-vector operations can all be expressed from these two simple constructions.</p>
+<pre><code>var dot_product   = +[i] x[i] * y[i]
+
+var mat_vec_prod  = :[i] +[j] M[i,j] * x[j]
+
+var transpose     = :[i,j] M[j,i]
+
+var inner_product = +[i,j] x[i] * Q[i,j] * y[j]
+
+var outer_product = :[i,j] x[i] * y[j]
+
+var mat_mat_prod  = :[i,j] +[k] A[i,k] * B[k,j]
+
+var trace         = +[i] M[i,i]
+
+var frobenius     = +[i,j] M[i,j] * M[i,j]
+
+var first_column  = :[i] M[i,0]
+
+var sum_columns   = :[i] +[j] M[i,j]</code></pre>
+<p>Part of the magic of tensor-index expressions is that the appropriate range of the index variables (<code>i</code> in <code>:[i]</code> or <code>+[i]</code>) can be inferred by the type-checker. In order for this to work, these <em>tensor-indicex</em> variables are given a special type. If you want to get their numeric value for computation with, you may need to explicitly cast the variable, at which point it can no longer be used to infer its dimension correctly. Generally this is a minor detail. The typechecker will complain if something is wrong.</p>
+<p>In addition to the summation reduction, Plexlang also supports a multiplication reduction.</p>
+<h3 id="tensor-construction-expressions">Tensor-Construction Expressions</h3>
+<p>In addition to the above, tensors can also be constructed out of individual values in code, which always gives a way of more explicitly writing down a detailed expression.</p>
+<pre><code>var prefix_sum    = { x[0], x[0]+x[1], x[0]+x[1]+x[2] }
+
+var cross_matix   = {{     0, -x[2],  x[1] },
+                     {  x[2],     0, -x[0] },
+                     { -x[1],  x[0],     0 }}
+
+var repeat_column = {x,x,x}</code></pre>
+<h1 id="plexlang-lua-api">Plexlang Lua API</h1>
+<p>Since Plexlang is embedded in Lua, the functions, constants and types are all represented as Lua objects/tables. In order to help Lua scripts work with these objects, we provide a set of functions that one can introspect with.</p>
+<h2 id="constant-introspection">Constant Introspection</h2>
+<p>To test whether a Lua value is a Plexlang constant</p>
+<pre><code>PL.isconstant( obj )</code></pre>
+<p>To get the value of the constant</p>
+<pre><code>local val = constant:get()</code></pre>
+<p>To get the type of the constant</p>
+<pre><code>local typ = constant:gettype()</code></pre>
+<h2 id="function-introspection">Function Introspection</h2>
+<p>To test whether a Lua value is a Plexlang function</p>
+<pre><code>PL.isfunction( obj )</code></pre>
+<p>To test whether a Plexlang function has been compiled yet</p>
+<pre><code>func:iscompiled()</code></pre>
+<p>To force compilation without calling the function</p>
+<pre><code>func:compile()</code></pre>
+<p>To get a string containing the function's declared name</p>
+<pre><code>local name = func:getname()</code></pre>
+<p>To get the type of the function</p>
+<pre><code>local typ = func:gettype()</code></pre>
+<p>Note that functions have a special <code>PL.arrow(...)</code> type that cannot be used as a value inside of Plexlang programs. However, arrow types can be constructed by passing a Lua list of argument types and Lua list of return types to the arrow constructor. e.g. <code>PL.arrow({PL.int32},{PL.mat3d, PL.vec3d})</code> is a function type for a function that takes one <code>int32</code> argument and returns a matrix and vector as return values. A Plexlang function that neither takes any arguments, nor returns any values has type <code>PL.arrow({},{})</code>.</p>
+<h2 id="type-introspection">Type Introspection</h2>
+<p>To test whether a Lua value is a Plexlang type</p>
+<pre><code>PL.istype( obj )</code></pre>
+<p>If an object is a Plexlang type, then you can test for what kind of type it is with the following functions</p>
+<pre><code>typ:isvalue() -- any primitive or tensor type
+  typ:isprimitive()
+  typ:istensor()
+    typ:isvector()
+    typ:ismatrix()
+
+typ:isarrow()</code></pre>
+<p>Plexlang ensures that all types are resolved to the same object, which means it's safe to compare two types using an equality check</p>
+<pre><code>assert(PL.vec3d == PL.vector(PL.double, 3))</code></pre>
+<p>To get the underlying primitive type for a tensor-type</p>
+<pre><code>local primtyp = tensortyp:basetype()</code></pre>
+<p>If you have a tensor type, then you can also get a Lua list of its dimensions <code>tensortyp.dims</code>, from which you can compute how many values there are in what shape. Plexlang lays these out in row-major order in memory and expects similar nesting throughout the language.</p>
+<p>Any value type, primitive or tensor can also be tested for what sub-class of value it is using the following tests.</p>
+<pre><code>valtyp:isintegral()
+valtyp:isnumeric()
+valtyp:islogical()</code></pre>
+<p>The argument and return lists for arrow types can be extracted using the following two functions</p>
+<pre><code>local argtyps = arrowtyp:argtypes()
+local rettyps = arrowtyp:rettypes()</code></pre>
+<h2 id="static-function-compilation">Static Function Compilation</h2>
+<p>To compile out a set of Plexlang functions into an object file</p>
+<pre><code>PL.compiletofile(object_filename, header_filename, {
+  fname1 = function1,
+  fname2 = function2,
+  ...
+})</code></pre>
+<p><code>object_filename</code> and <code>header_filename</code> are strings with filesystem paths specifying where the results should be placed. If <code>header_filename</code> is <code>nil</code> then no header will be generated. The third argument is a table of functions to be exposed as visible symbols in the object file. The table keys allow you to use an alternate function name when exporting/compiling in this way.</p>
+<p>See the <a href="../example_c"><code>example_c/</code></a> directory for an example of <code>PL.compiletofile()</code> use.</p>
+</div>
+</body>
+</html>

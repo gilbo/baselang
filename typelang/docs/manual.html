@@ -1,0 +1,277 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+  <meta http-equiv="Content-Style-Type" content="text/css" />
+  <meta name="generator" content="pandoc" />
+  <title>Typelang Manual - Typelang Manual</title>
+  <style type="text/css">code{white-space: pre;}</style>
+  <link rel="stylesheet" href="style.css" type="text/css" />
+</head>
+<body>
+<div id='body-wrapper'>
+<div id="header">
+<h1 class="title">Typelang Manual</h1>
+</div>
+<div id="TOC">
+<ul>
+<li><a href="#typelang-is...">Typelang is...</a></li>
+<li><a href="#getting-started-running-code">Getting Started (Running Code)</a><ul>
+<li><a href="#hello-42">Hello, 42!</a></li>
+<li><a href="#simple-ways-to-get-typelang-working">Simple Ways to Get Typelang Working</a><ul>
+<li><a href="#typelang-launcher-script-fast-start">Typelang Launcher Script (Fast Start)</a></li>
+<li><a href="#adding-typelang-to-terra_path">Adding Typelang to <code>TERRA_PATH</code></a></li>
+<li><a href="#custom-launcher-script">Custom Launcher Script</a></li>
+</ul></li>
+<li><a href="#using-typelang-terra-from-c-code">Using Typelang / Terra from <code>C</code> code</a></li>
+</ul></li>
+<li><a href="#getting-started-writing-code">Getting Started (Writing Code)</a><ul>
+<li><a href="#typelib">Typelib</a></li>
+<li><a href="#functions">Functions</a></li>
+<li><a href="#types-literals-constants-values">Types, Literals, Constants, Values</a><ul>
+<li><a href="#types">Types</a></li>
+<li><a href="#literals-and-constants">Literals and Constants</a></li>
+<li><a href="#casting-and-coercion">Casting and Coercion</a></li>
+</ul></li>
+<li><a href="#variables-and-assignment">Variables and Assignment</a></li>
+<li><a href="#control-flow">Control Flow</a></li>
+<li><a href="#primitive-expressions">Primitive Expressions</a><ul>
+<li><a href="#built-in-functions">Built-in functions</a></li>
+<li><a href="#external-functions">External Functions</a></li>
+</ul></li>
+</ul></li>
+<li><a href="#typelang-lua-api">Typelang Lua API</a><ul>
+<li><a href="#constant-introspection">Constant Introspection</a></li>
+<li><a href="#function-introspection">Function Introspection</a></li>
+<li><a href="#type-introspection">Type Introspection</a></li>
+<li><a href="#static-function-compilation">Static Function Compilation</a></li>
+</ul></li>
+</ul>
+</div>
+<h1 id="typelang-is...">Typelang is...</h1>
+<p>Typelang is a demonstration language using the Lua/Terra compiler infrastructure. It lacks certain common features like if-then-else, loops, and recursive functions, making it appropriately narrow for the specification of straight-line code / circuits. However, the language does include one moderately complicated feature:</p>
+<ul>
+<li>a rich primitive type system, including both single and double precision floating point numbers, as well as signed 32-bit integers and unsigned 64-bit integers. The type system also produces implicit coercions between these types when maintenance of precision can be guaranteed.</li>
+</ul>
+<h1 id="getting-started-running-code">Getting Started (Running Code)</h1>
+<p>We assume a passing familiarity with the <a href="http://terralang.org/">Lua/Terra ecosystem</a> in this document.</p>
+<h2 id="hello-42">Hello, 42!</h2>
+<p>Since Typelang doesn't support string values, let's do some arithmetic instead</p>
+<pre><code>import &#39;typelang.typelang&#39;
+
+local typel getanswer()
+  return 21 + 21
+end
+
+print(getanswer())</code></pre>
+<p>Save this in a file <code>hello42.t</code>. Then, execute the command <code>terra hello42.t</code> to run the program through Terra to print out <code>42</code>. Doing so will explode in your face. Ow. (see below)</p>
+<h2 id="simple-ways-to-get-typelang-working">Simple Ways to Get Typelang Working</h2>
+<p>The problem we just ran into is that Terra needs to know where the Typelang <a href="../release"><code>release/</code></a> directory is before it &quot;imports&quot; the language. Here are three simple ways to do that. (note that we can't solve this problem inside of the <code>hello42.t</code> script because <code>import</code> statements are early evaluated before any of the rest of the script starts executing.</p>
+<h3 id="typelang-launcher-script-fast-start">Typelang Launcher Script (Fast Start)</h3>
+<p>The simplest solution is to just use the provided executable launcher script. You can find it at <a href="../bin/typel"><code>bin/typel</code></a>. To run <code>hello42.t</code>, we just type</p>
+<p><code>./bin/typel hello42.t</code></p>
+<p>or any other valid path to the typel script from wherever you happen to be. For instance, you can add the <a href="../bin"><code>bin/</code></a> directory to your command line path to make <code>typel</code> easily accessible wherever you find yourself in your system.</p>
+<h3 id="adding-typelang-to-terra_path">Adding Typelang to <code>TERRA_PATH</code></h3>
+<p>If you work with a lot of Terra DSLs, you might find it simpler to just add Typelang's location to an environment variable. You can do this by extending <code>TERRA_PATH</code> with <code>release/?.t</code>. See the Terra documentation for more details.</p>
+<h3 id="custom-launcher-script">Custom Launcher Script</h3>
+<p>If you eventually feel like you want more control of the startup process so that you can better integrate Typelang into your tool or together with other Terra DSLs, you can always just use your own launch script and modify the <code>package.terrapath</code> variable directly there. If you're going down this route, take a look at <a href="../bin/typel"><code>bin/typel</code></a> for a skeleton example.</p>
+<h2 id="using-typelang-terra-from-c-code">Using Typelang / Terra from <code>C</code> code</h2>
+<p>For a more detailed description of ways of using Typelang from host C code, see <a href="../example_c/README.md"><code>example_c/README.md</code></a> and example code.</p>
+<p>There are two ways to use Typelang from C code. The first way is to embed a Lua/Terra interpreter in the C program. If you go this route, then everything except for setting up the <code>package.terrapath</code> variable with the <a href="../release"><code>release/</code></a> directory is detailed in the Terra and Lua docs.</p>
+<p>The second way is to use Typelang scripts as code generators during your build process. The key to this process is the <code>TL.compiletofile(...)</code> function, which is described <a href="#static-function-compilation">later on</a>.</p>
+<h1 id="getting-started-writing-code">Getting Started (Writing Code)</h1>
+<h2 id="typelib">Typelib</h2>
+<p>In the following we assume that the Typelang standard library has been included already using the line</p>
+<pre><code>local TL = require &#39;typelang.typelib&#39;</code></pre>
+<h2 id="functions">Functions</h2>
+<p>Typelang allows programmers to write simple straight-line code functions. We can define one of these functions either anonymously, inline, or in a statement</p>
+<pre><code>-- define a function as a global symbol in Lua
+typel foo()
+  return 42
+end
+
+-- define a function as a local symbol
+local typel bar()
+  return 42 + 1
+end
+
+-- define a function anonymously and assign to a variable
+local baz = typel()
+  return 42 + 2
+end</code></pre>
+<p>Functions can be given arguments, but those arguments must be typed</p>
+<pre><code>local typel scale_and_add_one( s : TL.double, x : TL.double )
+  return s*x + 1.0
+end</code></pre>
+<p>(notice that we need to look up Typelang types in the Typelang standard library)</p>
+<p>Typelang functions can also return multiple values.</p>
+<pre><code>local typel some_pi()
+  return 3, 1, 4, 1
+end
+
+local a, b, c, d = some_pi()
+print(a,b,c,d) -- will print    3   1   4   1</code></pre>
+<p>While Typelang lacks fully-recursive functions, you can call functions from other functions.</p>
+<pre><code>local typel square( x : TL.double )
+  return x * x
+end
+local typel quad( x : TL.double )
+  return square(square(x))
+end
+assert(quad(2) == 16)</code></pre>
+<h2 id="types-literals-constants-values">Types, Literals, Constants, Values</h2>
+<h3 id="types">Types</h3>
+<p>Typelang has the following primitive types</p>
+<pre><code>TL.int32 TL.uint64 TL.bool TL.float TL.double</code></pre>
+<h3 id="literals-and-constants">Literals and Constants</h3>
+<p>Numeric literals can be written into Typelang code as you would expect; with the expected types. For instance, here are 4 variants of 0:</p>
+<pre><code>0    -- inferred as TL.int32
+0.0  -- inferred as TL.double
+0f
+0.0f -- both inferred as TL.float
+0UL
+0ULL -- both inferred as TL.uint64</code></pre>
+<p>However, notice that <code>0L</code> or <code>0U</code> will produce errors because the <code>int64</code> and <code>uint32</code> types are not supported in Typelang.</p>
+<p>Aside from literals, constant values can also be computed in Lua and then captured by a Typelang function definition. Typelang will attempt to infer a reasonable type, but since Lua numbers are a very general type, this may be unsatisfactory. To help with this issue and improve code documentation, we provide Lua-level constants.</p>
+<pre><code>local biganswer = TL.Constant(TL.uint64, 42)
+
+local typel foo()
+  return biganswer
+end</code></pre>
+<h3 id="casting-and-coercion">Casting and Coercion</h3>
+<p>Typelang supports explicit typecasting as well as coercion. The semantics of these are very similar to C and Terra.</p>
+<p>In order to perform an explicit typecast, you just use a type as if it were a function.</p>
+<pre><code>local typel frac( x : TL.double )
+  return x - TL.double( TL.int32(x) )
+end</code></pre>
+<p>In addition to these explicit casts, Typelang will insert implicit casts, also called coercions (approximately) whenever doing so would not incur any loss of precision, but would avoid an otherwise annoying type-error. Specifically, the coercion rules are that</p>
+<ul>
+<li><code>TL.float</code> may be coerced to <code>TL.double</code></li>
+<li><code>TL.int32</code> may be coerced to <code>TL.double</code></li>
+<li><code>TL.int32</code> may be coerced to <code>TL.uint64</code> (This is the only one that's not strictly safe)</li>
+</ul>
+<h2 id="variables-and-assignment">Variables and Assignment</h2>
+<p>Aside from function arguments, Typelang allows for the declaration of variables. A variable must either be explicitly typed or assigned an initial value (from which the type can be inferred).</p>
+<pre><code>local typel foo()
+  var x : TL.double
+  var y = 0.0
+  var z : TL.double = 1.0
+  return y + z
+end</code></pre>
+<p>Assignments to variables are also allowed, including to multiple variables at once. This can be used to capture multiple return values from a function call.</p>
+<pre><code>local typel square_triple(x : TL.double)
+  var square : TL.double
+  var triple : TL.double
+  var a = x * x
+  square, triple = a, a*x
+  return square, triple
+end
+
+local typel foo()
+  var x : TL.double
+  var y : TL.double
+  x,y = square_triple(3)
+end</code></pre>
+<p>However, the current version of Typelang does not support the declaration and assignment of multiple variables at the same time.</p>
+<h2 id="control-flow">Control Flow</h2>
+<p>The scope of variables can be limited with do blocks, though other kinds of control flow are omitted from the language.</p>
+<pre><code>local typel shadow()
+  var x = 3
+  do
+    var x = 5
+  end
+  return x
+end
+
+assert(shadow() == 3)</code></pre>
+<h2 id="primitive-expressions">Primitive Expressions</h2>
+<p>Typelang supports the following kinds of operations between primitive expressions.</p>
+<pre><code>local typel arithmetic_plus()
+  var x  = 12.0
+  var y  = 32.0
+  var bt = true
+  var bf = false
+
+  var negx    = -x
+  var notb    = not bt
+
+  var bor     = bt or bf
+  var band    = bt and bf
+
+  var lt      = x &lt; y
+  var gt      = x &gt; y
+  var lte     = x &lt;= y
+  var gte     = x &gt;= y
+  var eq      = x == y
+  var neq     = x ~= y    -- notice Lua style not-equal syntax
+
+  var sum     = x + y
+  var diff    = x - y
+  var prod    = x * y
+  var quot    = x / y
+
+  var parens  = x * (x + y)
+end</code></pre>
+<h3 id="built-in-functions">Built-in functions</h3>
+<p>There is a built-in assertion function <code>TL.assert()</code> that's useful for writing testing code. If the argument evaluates to false, then the entire program will terminate.</p>
+<pre><code>local typel runtest()
+  var answer = 42
+  TL.assert(answer / 2 == 21)
+end</code></pre>
+<h3 id="external-functions">External Functions</h3>
+<p>You can extend Typelang with custom external functions, provided they follow a Terra calling convention (e.g. C functions). To do this, the <code>TL.extern()</code> library function is provided.</p>
+<p>For example, suppose you want to use a sqrt function. You could import the C math library using Terra and then bind the function in using <code>TL.extern()</code></p>
+<pre><code>local cmath = terralib.includecstring [[#include &quot;math.h&quot;]]
+local sqrt = TL.extern(&#39;sqrt&#39;, TL.arrow(TL.double, TL.double), cmath.sqrt)</code></pre>
+<p>The first argument to <code>TL.extern</code> is the function name for debugging purposes. The second argument is the function's type, and the third argument is the implementation of the function.</p>
+<p>WARNING: In general, Typelang assumes that functions imported in this way are &quot;referentially transparent&quot; in the sense that they should be indistinguishable from a deterministic state-free function <em>from the perspective of Typelang</em>. This allows that the implementation of an external function could still use side-effects or randomness to produce the same result more efficiently, or to record profiling information, etc.</p>
+<h1 id="typelang-lua-api">Typelang Lua API</h1>
+<p>Since Typelang is embedded in Lua, the functions, constants and types are all represented as Lua objects/tables. In order to help Lua scripts work with these objects, we provide a set of functions that one can introspect with.</p>
+<h2 id="constant-introspection">Constant Introspection</h2>
+<p>To test whether a Lua value is a Typelang constant</p>
+<pre><code>TL.isconstant( obj )</code></pre>
+<p>To get the value of the constant</p>
+<pre><code>local val = constant:get()</code></pre>
+<p>To get the type of the constant</p>
+<pre><code>local typ = constant:gettype()</code></pre>
+<h2 id="function-introspection">Function Introspection</h2>
+<p>To test whether a Lua value is a Typelang function</p>
+<pre><code>TL.isfunction( obj )</code></pre>
+<p>To test whether a Typelang function has been compiled yet</p>
+<pre><code>func:iscompiled()</code></pre>
+<p>To force compilation without calling the function</p>
+<pre><code>func:compile()</code></pre>
+<p>To get a string containing the function's declared name</p>
+<pre><code>local name = func:getname()</code></pre>
+<p>To get the type of the function</p>
+<pre><code>local typ = func:gettype()</code></pre>
+<p>Note that functions have a special <code>TL.arrow(...)</code> type that cannot be used as a value inside of Typelang programs. However, arrow types can be constructed by passing a Lua list of argument types and Lua list of return types to the arrow constructor. e.g. <code>TL.arrow({TL.int32},{TL.bool, TL.double})</code> is a function type for a function that takes one <code>int32</code> argument and returns a <code>bool</code> and <code>double</code> as return values. A Typelang function that neither takes any arguments, nor returns any values has type <code>TL.arrow({},{})</code>.</p>
+<h2 id="type-introspection">Type Introspection</h2>
+<p>To test whether a Lua value is a Typelang type</p>
+<pre><code>TL.istype( obj )</code></pre>
+<p>If an object is a Typelang type, then you can test for what kind of type it is with the following functions</p>
+<pre><code>typ:isvalue()
+  typ:isprimitive() -- all primitives are values
+
+typ:isarrow()</code></pre>
+<p>Typelang ensures that all types are resolved to the same object, which means it's safe to compare two types using an equality check</p>
+<pre><code>assert(TL.arrow({},{}) == TL.arrow({},{}))</code></pre>
+<p>You can test what sub-class of value a type is using the following tests.</p>
+<pre><code>valtyp:isintegral()
+valtyp:isnumeric()
+valtyp:islogical()</code></pre>
+<p>The argument and return lists for arrow types can be extracted using the following two functions</p>
+<pre><code>local argtyps = arrowtyp:argtypes()
+local rettyps = arrowtyp:rettypes()</code></pre>
+<h2 id="static-function-compilation">Static Function Compilation</h2>
+<p>To compile out a set of Typelang functions into an object file</p>
+<pre><code>TL.compiletofile(object_filename, header_filename, {
+  fname1 = function1,
+  fname2 = function2,
+  ...
+})</code></pre>
+<p><code>object_filename</code> and <code>header_filename</code> are strings with filesystem paths specifying where the results should be placed. If <code>header_filename</code> is <code>nil</code> then no header will be generated. The third argument is a table of functions to be exposed as visible symbols in the object file. The table keys allow you to use an alternate function name when exporting/compiling in this way.</p>
+<p>See the <a href="../example_c"><code>example_c/</code></a> directory for an example of <code>TL.compiletofile()</code> use.</p>
+</div>
+</body>
+</html>

@@ -1,0 +1,72 @@
+#!/usr/bin/env terra
+
+-- print the number of and specific arguments (for debugging)
+--print(#arg, unpack(arg))
+
+-- Extract options
+local options = {}
+local write_i = 1
+for i=1,#arg do
+  if arg[i] == '--help' then
+    options.help = true
+  else
+    arg[write_i] = arg[i]
+    write_i = write_i + 1
+  end
+end
+for k=write_i,#arg do arg[k] = nil end -- compaction of arg list
+
+local function printhelp()
+print([[
+typel [options] source_file.t
+OPTIONS:
+  --help        print this help message]])
+end
+
+if options.help then
+  printhelp()
+  os.exit(0)
+end
+
+-- Extract script filename to run
+local scriptname = nil
+if #arg == 0 then
+  scriptname = nil
+elseif #arg == 1 then
+  scriptname = arg[1]
+else
+  printhelp()
+  print('Error: found too many arguments')
+  print('',unpack(arg))
+  os.exit(1)
+end
+
+if not scriptname then
+  printhelp()
+  print('Error: expected source file to run; got none')
+  os.exit(1)
+end
+
+-- get the directory of this launcher script file using a Lua trick
+local launchbin_path = debug.getinfo(1,"S").source
+-- has the form '@path_to_bin_dir/typel', so...
+local bindir_path    = launchbin_path:sub(2,-#'typel' - 1)
+local release_path   = bindir_path..'../release'
+-- For debug
+--print(launchbin_path, bindir_path, release_path)
+
+-- Now that we have the path, we can use it to extend the Terra
+-- searchpath to find the typelang files
+package.terrapath = package.terrapath..';'..release_path..'/?.t'
+
+-- and we can launch the script safely now
+local blob, load_err = terralib.loadfile(scriptname)
+if load_err then
+  print(load_err)
+  os.exit(1)
+else
+  blob() -- actually execute the script
+end
+
+
+
